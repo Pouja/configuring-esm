@@ -1,0 +1,23 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "outDir": "out-tsc",
+        "rootDir": "src",
+        "baseUrl": ".",
+        "moduleResolution": "nodenext",
+        "module": "NodeNext",
+        "skipDefaultLibCheck": true,
+        "skipLibCheck": true,
+        "composite": true,
+        "moduleDetection": "force",
+        "strict": true,
+        "target": "ESNext",
+        "types": ["node"],
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "paths": {
+            "@pouja/lib/*": ["./src/lib/*.ts"]
+        }
+    },
+    "include": ["**/*.ts"]
+}

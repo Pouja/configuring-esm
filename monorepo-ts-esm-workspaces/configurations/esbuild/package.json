@@ -1,0 +1,12 @@
+{
+    "name": "@configurations/esbuild",
+    "exports": {
+        "./base.mjs": "./esbuild.config.mjs"
+    },
+    "dependencies": {
+        "esbuild": "^0.25.2"
+    },
+    "devDependencies": {
+        "@types/node": "^22.14.1"
+    }
+}

@@ -1,0 +1,4 @@
+packages:
+  - 'configurations/**'
+  - 'domains/**'
+  - 'packages/**'

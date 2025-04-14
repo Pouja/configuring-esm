@@ -1,0 +1,25 @@
+{
+    "name": "@new-customer/api-models",
+    "typesVersions": {
+        "*": {
+            "*": [
+                "./src/*"
+            ]
+        }
+    },
+    "exports": {
+        "./*": "./src/*"
+    },
+    "dependencies": {
+        "@packages/base-models": "workspace:*",
+        "class-validator": "^0.14.1"
+    },
+    "type": "module",
+    "devDependencies": {
+        "@configurations/typescript": "workspace:*",
+        "@types/node": "^22.14.1"
+    },
+    "scripts": {
+        "typecheck": "tsc --project tsconfig.json --noEmit"
+    }
+}

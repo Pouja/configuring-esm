@@ -1,0 +1,21 @@
+{
+    "name": "@new-customer/app",
+    "devDependencies": {
+        "@aws-sdk/client-lambda": "^3.787.0",
+        "@configurations/esbuild": "workspace:*",
+        "@configurations/typescript": "workspace:*",
+        "@types/aws-lambda": "^8.10.149",
+        "@types/node": "^22.14.1",
+        "aws-lambda": "^1.0.7"
+    },
+    "dependencies": {
+        "@new-customer/api-models": "workspace:*",
+        "@packages/base-models": "workspace:*",
+        "class-validator": "0.14.1"
+    },
+    "type": "module",
+    "scripts": {
+        "typecheck": "tsc --project tsconfig.json --noEmit",
+        "bundle": "node esbuild.config.mjs"
+    }
+}

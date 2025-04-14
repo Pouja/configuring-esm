@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "lib": ["es2023"],
+        "module": "nodenext",
+        "target": "es2022",
+        "types": ["node"],
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "moduleResolution": "node16",
+
+        "verbatimModuleSyntax": true,
+        "incremental": true,
+        "composite": true,
+        "skipDefaultLibCheck": true,
+        "disableSizeLimit": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "isolatedModules": true,
+        "useUnknownInCatchVariables": true
+    }
+}

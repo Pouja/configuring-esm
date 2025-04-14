@@ -1,0 +1,28 @@
+{
+    "name": "@packages/base-models",
+    "typesVersions": {
+        "*": {
+            "./enums/*": [
+                "./src/enums/*"
+            ],
+            "./models/*": [
+                "./src/models/*"
+            ]
+        }
+    },
+    "type": "module",
+    "exports": {
+        "./enums/*": "./src/enums/*",
+        "./models/*": "./src/models/*"
+    },
+    "dependencies": {
+        "class-validator": "0.14.1"
+    },
+    "scripts": {
+        "typecheck": "tsc --project tsconfig.json --noEmit"
+    },
+    "devDependencies": {
+        "@configurations/typescript": "workspace:*",
+        "@types/node": "^22.14.1"
+    }
+}

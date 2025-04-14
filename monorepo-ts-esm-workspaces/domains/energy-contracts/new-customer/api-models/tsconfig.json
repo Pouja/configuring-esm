@@ -1,0 +1,10 @@
+{
+    "extends": ["@configurations/typescript/base"],
+    "compilerOptions": {
+        "rootDir": ".",
+        "baseUrl": "."
+    },
+    "include": [
+        "src/**/*.ts"
+    ]
+}

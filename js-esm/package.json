@@ -1,0 +1,18 @@
+{
+    "private": true,
+    "dependencies": {
+        "class-validator": "^0.14.1"
+    },
+    "devDependencies": {
+        "@types/node": "^22.14.0",
+        "esbuild": "^0.25.2",
+        "typescript": "^5.8.3"
+    },
+    "imports": {
+        "#pouja/lib/*": "./src/lib/*"
+    },
+    "type": "module",
+    "scripts": {
+        "bundle": "rm -rf ./dist && node esbuild.config.mjs src/index.mjs"
+    }
+}

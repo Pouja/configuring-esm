@@ -1,0 +1,10 @@
+{
+    "name": "@configurations/typescript",
+    "private": true,
+    "exports": {
+        "./base": "./tsconfig.base.json"
+    },
+    "devDependencies": {
+        "@types/node": "^22.14.1"
+    }
+}
