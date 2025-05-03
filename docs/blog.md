@@ -1,7 +1,7 @@
 # Treeshaking and ESM
 
 With increasing support of ESM in Typescript [1] and NodeJS [2], it becomes easier and easier to write your frontend or backed in ESM format.
-It has better support for treeshaking when using esbuild [3] or webpack [4] and with complexity rising of your backend and frontend it is more then ever important to look at your bundle sizes. 
+It has better support for treeshaking when using `esbuild` [3] or `webpack` [4] and with complexity rising of your backend and frontend it is more then ever important to look at your bundle sizes. 
 Even just recently AWS has announced that everyone, not just people using custom runtime environment, have to pay for the INIT Duration [5], making it also cost effective to have your AWS Lambda functions as small as possible.
 
 I want to bring you through my journey of understanding difference between CommonJS and ESM and why it allows for better treeshaking. 
@@ -25,7 +25,7 @@ But most importantly regardless of which tips I give here and which ones you rea
 * Avoid barrel files or set `sideEffects` to `false` in your nearest `package.json`
 * Set `@typescript-eslint/no-unused-vars` to `error`
 * Set `@typescript-eslint/consistent-type-imports` to `error`
-* Update your webpack/esbuild config to also read `module` entry of your npm packages 
+* Update your `webpack`/esbuild config to also read `module` entry of your npm packages 
 
 ## Module System
 To able to use functions or classes written in one file in another file, requires a way of telling how the files should be linked.
@@ -80,7 +80,7 @@ console.log(allTheSame); // true
 _Please do not do this_
 
 This is also why your javascript file is executed when referenced, because NodeJS has to know what it has to import.
-That is the largest reason why esbuild or webpack can not treeshake properly. 
+That is the largest reason why `esbuild` or `webpack` can not treeshake properly. 
 Because it can not do any static analysis to create a tree of how your program is linked together.
 The same principle applies when using `module.exports`. 
 Where ever you can use an object, you can export your function or variable.
@@ -136,12 +136,14 @@ This is also where people get confused when they are writing typescript but they
 Befor we dive in to how much difference it makes between CJS and ESM and how you can transition.
 It is useful to know how you can measure it.
 
-webpack And esbuild both support emitting a metafile, which contains data which npm packages are imported, why they are imported and which module system is used to import them.
-With webpack you can use the `--profile` [flag](https://webpack.js.org/configuration/other-options/#profile).
-With esbuild you can use the `--metafile=bundle.meta.json` [flag](https://esbuild.github.io/api/#build-metadata) or the property `{meta: true}` that will return the json object containg the meta data, which you can write to the file system yourself.
+webpack And `esbuild` both support emitting a metafile, which contains data which npm packages are imported, why they are imported and which module system is used to import them.
+With `webpack` you can use the `--profile` [flag](https://webpack.js.org/configuration/other-options/#profile).
+With `esbuild` you can use the `--metafile=bundle.meta.json` [flag](https://esbuild.github.io/api/#build-metadata) or the property `{meta: true}` that will return the json object containg the meta data, which you can write to the file system yourself.
 You can submit the meta file to https://esbuild.github.io/analyze/ and then you will get a visual representation on how everything is bundled.
 You can let it mark visually which packages are intepretted as CommonJS and which ones as ESM.
-This will give you the knowledge if you imported them correctly and if esbuild was able to find the ESM bundle of the npm package.
+This will give you the knowledge if you imported them correctly and if `esbuild` was able to find the ESM bundle of the npm package.
+
+[add screenshot or gif on how to use the website]
 
 ## CJS to ESM
 To show you the difference, I have created 2 projects, both have similar code but one is written for [CommonJS](https://github.com/Pouja/configuring-esm/tree/main/ts-cjs) and the other for [ESM](https://github.com/Pouja/configuring-esm/tree/main/ts-esm).
@@ -150,9 +152,9 @@ This should also help you transitioning to ESM by looking at the differences.
 I believe more in learning by doing and learning by reading.
 So I hope this helps for you.
 
-### esbuild
+### `esbuild`
 Both repository contain a `esbuild.config.(m)js` file.
-Depending on your project, this configuration is either generated or hidden from you.
+Depending on your own project, this configuration is in most cases either generated or hidden from you.
 The most important configurations are:
 ```javascript
 {
@@ -162,13 +164,13 @@ The most important configurations are:
     format: "esm", // Tells if the output should be in ESM format or in CommonJS
     metafile: true, // If true, it will return a meta file object
     minify: true, // Will eliminate any unreachable statement, shorten all names and remove all whitespaces where possible
-    tsconfig: 'tsconfig.json' // It only reads some properties from the tsconfig, see also TsconfigRaw in main.d.ts of esbuild
+    tsconfig: 'tsconfig.json' // It only reads some properties from the tsconfig, see also TsconfigRaw in main.d.ts of `esbuild`
 }
 ```
 
 esbuild Has its own transpiler, so that is why only some properties are read from the tsconfig.
-But the exception is when you use a plugin like esbuild-decorator, which does use all the settings from your tsconfig.
-So you can not just configure your tsconfig to use CommonJS and then tell esbuild to output in ESM, you will most likely get some runtime errors.
+But the exception is when you use a plugin like `esbuild`-decorator, which does use all the settings from your tsconfig.
+So you can not just configure your tsconfig to use CommonJS and then tell `esbuild` to output in ESM, you will most likely get some runtime errors.
 
 The `mainFields` property is quite important.
 Only a few modern libraries now output properly.
@@ -191,7 +193,7 @@ So even if you do this:
 import { validate } from 'class-validator';
 ```
 NodeJS will look at `node_modules/class-validator/cjs/index.js` even though your file is in `.mjs` format and even if your package.json you have set `type` to `module`.
-You can still tell esbuild to use the ESM output of class-validator by setting the `mainFields` property.
+You can still tell `esbuild` to use the ESM output of class-validator by setting the `mainFields` property.
 
 Use this information!
 When inspecting and investigating your imports and you notice it uses the CommonJS variant of the package, even when they have ESM files.
@@ -231,18 +233,18 @@ And it depends on the file extensions, using `.mts` will tell `typescript` to us
 If you use `.ts` but the package.json has the property `type` set to `module` it will use ESM.
 In all other cases it will use CommonJS.
 Although typescript is quite lenient since 5.8.x on which module system it will use, it best to be consistent.
-Do not mix. You will get unexpected results when using frameworks that are consistent.
+
+> Do not mix! You will get unexpected results when using frameworks that are consistent.
 
 You can also set `moduleResolution` to `bundler`, but then you have to specify to which specific module system you want your javascript files compiled to.
 Then it does not matter what file extension you use, it will always output to what ever module system you have picked.
 
-When using `nodenext` value you can still output to both CommonJS format and ESM format, you only need to change the `format` property in esbuild and you have to make sure to not set the `type` property in the package.json file.
+When using `nodenext` value you can still output to both CommonJS format and ESM format, you only need to change the `format` property in `esbuild` and you have to make sure to not set the `type` property in the package.json file.
 
 If you are not intending on publishing and if all your libraries/framework support ESM, which Jest does poorly right now, I would recommend to setting the `type` property to `module` and use the `.mts` file extension.
 You will notice  that you have to use `.mjs` when importing a relative file.
 Do not worry, you are not importing a javascript file, Typescript will automatically search for any `.mts` file with the same module name.
 It is confusing, people have complained about this behavior, but it is what it is.
-
 
 ## CJS vs ESM
 Now you know how you can transition, but how much will the difference be?
@@ -256,15 +258,15 @@ ESM:
 ![ESM](images/ESM-meta.png "Bundle size for ESM")
 
 It is 20x smaller when using the same code.
-If you generate the metafiles and upload it to esbuild page, you can reproduce this result.
-You will notice that the biggest difference comes from libphonenumber-js not being present, because due to ESM, esbuild knows it can remove it from the bundle safely.
+If you generate the metafiles and upload it to `esbuild` page, you can reproduce this result.
+You will notice that the biggest difference comes from libphonenumber-js not being present, because due to ESM, `esbuild` knows it can remove it from the bundle safely.
 
 ## Proper Imports
 Even when using CommonJS you can reduce your bundle size by looking at the import statements
 
 Use `import type { MyClass} from './MyClass';` or `import { type MyClass} from './MyClass';` if you only use the import as a type.
 All typescript `type` and `interface` do get stripped out by default.
-But if you use something like `typeof MyClass` and you do not import it as a type, then esbuild will add that class to your bundle.
+But if you use something like `typeof MyClass` and you do not import it as a type, then `esbuild` will add that class to your bundle.
 Using [@typescript-eslint/consistent-type-imports](https://typescript-eslint.io/rules/consistent-type-imports/) allows you to capture most of them.
 This rule will not work on any file that uses decorators.
 That is because under the hood the imported value might actually be used when setting the metadata of the decorated property or method.
@@ -346,10 +348,10 @@ You can play with this in [my example project](https://github.com/Pouja/configur
 2. `cd barrel-file`
 3. `npm install`
 4. Play with the barrel file, `sideEffects` property, side effect file `load-dotenv.ts`
-5. Run `node esbuild.config.mjs` and see the effects.
+5. Run `node `esbuild`.config.mjs` and see the effects.
 
 ## Unused Code
-I have listed several things that esbuild might see as death code depending on the setup of your project.
+I have listed several things that `esbuild` might see as death code depending on the setup of your project.
 But what about unused code even when using ESM and no side effects?
 
 Unused methods and properties of classes will not be treeshaking.
@@ -366,7 +368,7 @@ Only top level objects, primitives and functions are considered for treeshaking.
 Unused properties in objects.
 There might be some side effects, so it hard to determine if you can remove that code.
 
-Unreachable statements when not using minification in webpack or in esbuild. 
+Unreachable statements when not using minification in `webpack` or in `esbuild`. 
 If you have functions that are dependant on some build time environment variable, for example `if (process.env.NODE_ENV === 'production')`.
 Or another example of this, is having a class that has different methods for different environment (browser or os).
 Then make sure to enable minification.
