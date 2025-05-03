@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "module": "NodeNext",
+        "moduleResolution": "nodenext",
+        "strict": true,
+        "types": ["node"],
+        "baseUrl": ".",
+        "rootDir": "src",
+        "incremental": true,
+        "isolatedModules": true,
+        "composite": true,
+        "noUncheckedSideEffectImports": true
+    },
+    "include": ["src/*/**.ts"]
+}

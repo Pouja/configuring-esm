@@ -1,0 +1,28 @@
+{
+    "name": "aws-sdk-barrel-demo",
+    "version": "1.0.0",
+    "sideEffects": false,
+    "scripts": {
+        "build": "tsc",
+        "bundle": "node esbuild.config.mjs"
+    },
+    "dependencies": {
+        "@aws-sdk/client-cloudwatch": "3.799.0",
+        "@aws-sdk/client-dynamodb": "3.799.0",
+        "@aws-sdk/client-lambda": "3.799.0",
+        "@aws-sdk/client-s3": "3.799.0",
+        "@aws-sdk/client-sqs": "3.799.0",
+        "@aws-sdk/client-ssm": "3.799.0",
+        "date-fns": "^4.1.0",
+        "dotenv": "^16.5.0",
+        "mime-types": "^3.0.1",
+        "uuid": "^11.1.0",
+        "zod": "^3.24.3"
+    },
+    "devDependencies": {
+        "@types/mime-types": "^2.1.4",
+        "@types/node": "^22.15.3",
+        "esbuild": "^0.25.3",
+        "typescript": "5.8.3"
+    }
+}
