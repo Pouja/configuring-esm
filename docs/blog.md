@@ -273,6 +273,80 @@ Eliminate unused imports by detecting unused variables/functions that might use 
 You can detect those by using [@typescript-eslint/no-unused-vars](https://typescript-eslint.io/rules/no-unused-vars).
 
 ## Barrel files
+Even with using proper imports, with a barrel file you can still end up with that package or file in your bundle. Why?
+
+First of all, what is a barrel file? When you re-export everything from a folder within a `index.ts` that is called a barrel file.
+An example of this:
+```typescript
+// index.ts
+export * from './use-cloudwatch';
+export * from './use-dynamodb';
+export * from './use-lambda';
+export * from './use-s3';
+export * from './use-sqs';
+export * from './use-ssm';
+export * from './helpers/index';
+```
+
+All exported values within each of those files are re-exported by `index.ts`.
+This makes it easier to import any value of any of the files.
+No need to have a long listed import statement like: `import { mapToZod } from '../lib/helpers/zod-utilities';`, but you can write it as `import { mapToZod } from '../lib';`.
+
+A lot of blog posts mark barrel files as evil.
+But it is a bit nuanced.
+It has impact on two things: runtime and bundle size.
+
+### Runtime
+As explained in the CommonJS section, each file is executed before imported and wrapped by NodeJS.
+That means when you import a barrel file, NodeJS will go through each file mentioned there, then it will read each require call, load that file etc.
+When your program is large enough, or you node_modules folder is large enough, this will impact any framework or library you are using.
+
+Take `jest` for example, it will go through all those files before it even runs any test function.
+I have seen cases where it took 20+ seconds before running the first file, even when most files were not even used.
+But due to extensive usage of barrel files all those files were executed and transpiled.
+Even when you use ESM, `jest` still has to transpile or compile your typescript files to javascript files.
+By eliminating some of those barrel files, I was able to reduce the start time to 5 seconds.
+
+If you use your barrel files sparingly or if you program is not large, you are good to go.
+
+### Bundling
+In the default case of `esbuild` and `webpack` it will not treeshake any unused re-exported value.
+That is due to the possible side effects a file can have.
+
+What is considered a side effect?
+Take the following [file](https://github.com/Pouja/configuring-esm/blob/main/barrel-file/src/lib/load-dotenv.ts):
+```typescript
+// load-dotenv.ts
+import dotenv from "dotenv";
+
+dotenv.config();
+```
+When you import that file: `import './load-dotenv';` it will read out the `.env` file and update `process.env`.
+This is considered a side effect.
+You have more examples:
+- `import 'reflect-metadata';` when you need to use `tsyringe`, it modifies the global `Reflect` object.
+- `import 'zone.js';` when you use `angular`, overwrites all async calls with `zones`.
+
+So there is no sure way that `esbuild` or `webpack` can know that it can safely remove files when re-exporting them without giving any hints.
+Both of them support [1](https://esbuild.github.io/api/#ignore-annotations)[2](https://webpack.js.org/guides/tree-shaking/#clarifying-tree-shaking-and-sideeffects) support the `sideEffects` property in the `package.json`.
+When set to false it will safely remove any unused re-exported file.
+But that will also remove `load-dotenv.ts`! So be careful when using that property.
+
+A good solution in a large project is to have `pnpm` workspaces, where you have internal libraries.
+Then per library you can mark if all those files that are exported through the `package.json` file have side effects or not.
+
+If it is not possible to set the property `sideEffects` then you should prevent any re-exporting files or values.
+That means no barrel files.
+That also means no god files. God files is what I refer to values that import everything from everywhere are a single entry point.
+If you define all your AWS Lambda handlers in one file, that is a god file.
+If you define all the routes with all the components of your frontend page and do not chunk them, that is a god file.
+
+You can play with this in [my example project](https://github.com/Pouja/configuring-esm/blob/main/barrel-file).
+1. Clone the repository
+2. `cd barrel-file`
+3. `npm install`
+4. Play with the barrel file, `sideEffects` property, side effect file `load-dotenv.ts`
+5. Run `node esbuild.config.mjs` and see the effects.
 
 ## Unused Code
 I have listed several things that esbuild might see as death code depending on the setup of your project.
@@ -299,3 +373,13 @@ Then make sure to enable minification.
 Or you can use [labels](https://esbuild.github.io/api/#drop-labels) to achieve similar behavior.
 
 > NOTE: There might be bundlers out there that can do better in certain scenarios. That is why measuring is key!
+
+## Conclusion
+I have listed some things to look out for.
+This list might not be exhaustive, but the most important thing is: analyse!
+Make sure that bundler you use has a way to convey which files and which npm packages were included.
+This blog post should give you enough information to understand then why some files/code/packages were included.
+From there you can start eliminating and changing the structure of your code.
+
+Happy hunting and happy coding!
+Thank you for reading.
