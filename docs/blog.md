@@ -161,6 +161,7 @@ The most important configurations are:
     platform: "node", // Tells if it should expect window object to be present, or the NodeJS internal packages
     format: "esm", // Tells if the output should be in ESM format or in CommonJS
     metafile: true, // If true, it will return a meta file object
+    minify: true, // Will eliminate any unreachable statement, shorten all names and remove all whitespaces where possible
     tsconfig: 'tsconfig.json' // It only reads some properties from the tsconfig, see also TsconfigRaw in main.d.ts of esbuild
 }
 ```
@@ -256,18 +257,45 @@ ESM:
 
 It is 20x smaller when using the same code.
 If you generate the metafiles and upload it to esbuild page, you can reproduce this result.
-You will notice that the biggest difference comes from libphonenumber-js not being present,
-because due to ESM, esbuild knows it can remove it from the end result safely.
+You will notice that the biggest difference comes from libphonenumber-js not being present, because due to ESM, esbuild knows it can remove it from the bundle safely.
 
 ## Proper Imports
 Even when using CommonJS you can reduce your bundle size by looking at the import statements
 
 Use `import type { MyClass} from './MyClass';` or `import { type MyClass} from './MyClass';` if you only use the import as a type.
+All typescript `type` and `interface` do get stripped out by default.
+But if you use something like `typeof MyClass` and you do not import it as a type, then esbuild will add that class to your bundle.
 Using [@typescript-eslint/consistent-type-imports](https://typescript-eslint.io/rules/consistent-type-imports/) allows you to capture most of them.
 This rule will not work on any file that uses decorators.
-That is because under the hood the imported value might actually be used when setting the metadata of the decorated property.
+That is because under the hood the imported value might actually be used when setting the metadata of the decorated property or method.
 
 Eliminate unused imports by detecting unused variables/functions that might use those.
 You can detect those by using [@typescript-eslint/no-unused-vars](https://typescript-eslint.io/rules/no-unused-vars).
 
 ## Barrel files
+
+## Unused Code
+I have listed several things that esbuild might see as death code depending on the setup of your project.
+But what about unused code even when using ESM and no side effects?
+
+Unused methods and properties of classes will not be treeshaking.
+If you use a large npm package within a method, but you actually use the class but not that specific method, you will still end up with that npm package in your bundle.
+This is where separation of concerns and cohesion come in.
+Make sure to follow that paradigm.
+
+Unused elements in the array.
+In most cases this will not impact your bundle much.
+
+Nested unused functions.
+Only top level objects, primitives and functions are considered for treeshaking.
+
+Unused properties in objects.
+There might be some side effects, so it hard to determine if you can remove that code.
+
+Unreachable statements when not using minification in webpack or in esbuild. 
+If you have functions that are dependant on some build time environment variable, for example `if (process.env.NODE_ENV === 'production')`.
+Or another example of this, is having a class that has different methods for different environment (browser or os).
+Then make sure to enable minification.
+Or you can use [labels](https://esbuild.github.io/api/#drop-labels) to achieve similar behavior.
+
+> NOTE: There might be bundlers out there that can do better in certain scenarios. That is why measuring is key!

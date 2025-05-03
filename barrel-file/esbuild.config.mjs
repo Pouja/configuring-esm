@@ -19,6 +19,7 @@ try {
         metafile: true,
         outdir: "dist",
         color: true,
+        minify: true,
         logLevel: 'info',
         tsconfig: 'tsconfig.json'
     });
