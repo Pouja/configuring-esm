@@ -9,6 +9,15 @@ Looking at which typescript config rules and eslint rule might help to reduce it
 Looking at what does get removed when treeshaking and what does not and why.
 But most importantly regardless of which tips I give here and which ones you read in other posts: how you can measure the bundle size so you can iteratively decrease it.
 
+## Table of Contents
+
+1. [Module System](#module-system)
+2. [Measuring](#measuring)
+3. [CJS to ESM](#cjs-to-esm)
+4. [CJS vs ESM](#cjs-vs-esm)
+5. [Proper Imports](#proper-imports)
+6. [Barrel Files](#barrel-files)
+
 ## TLDR;
 
 * Set `module` and `moduleResolution` in your TS Config to `nodenext`
@@ -18,7 +27,7 @@ But most importantly regardless of which tips I give here and which ones you rea
 * Set `@typescript-eslint/consistent-type-imports` to `error`
 * Update your webpack/esbuild config to also read `module` entry of your npm packages 
 
-## Module
+## Module System
 To able to use functions or classes written in one file in another file, requires a way of telling how the files should be linked.
 In the days of gulp/grunt and jquery there was not much choice, we all wrote everything on the `window` object.
 Everything was accessible by everyone. We had to use closures to isolate `var` variables from another and prevent naming collisions.
@@ -187,7 +196,6 @@ Use this information!
 When inspecting and investigating your imports and you notice it uses the CommonJS variant of the package, even when they have ESM files.
 Look at their package.json! If they do not emit any ESM file, your only options are: submitting a pull request or copy the code to your code base.
 
-
 ### package.json
 The property `type` in the package.json is set to `module` for the ESM project and omitted CommonJS project, which defaults to `commonjs`.
 You can actually choose how you will mark your project as ESM or CommonJS. 
@@ -239,9 +247,11 @@ It is confusing, people have complained about this behavior, but it is what it i
 Now you know how you can transition, but how much will the difference be?
 
 CommonJS:
+
 ![CJS](images/CJS-meta.png "Bundle size for CommonJS")
 
 ESM:
+
 ![ESM](images/ESM-meta.png "Bundle size for ESM")
 
 It is 20x smaller when using the same code.
