@@ -9,7 +9,7 @@
         "typescript": "^5.8.3"
     },
     "imports": {
-        "#pouja/lib/*": "./src/lib/*"
+        "#lib/*": "./src/lib/*"
     },
     "type": "module",
     "scripts": {

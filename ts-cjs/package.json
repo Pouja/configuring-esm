@@ -8,6 +8,7 @@
         "esbuild": "^0.25.2",
         "typescript": "^5.8.3"
     },
+    "type": "commonjs",
     "scripts": {
         "compile": "rm -rf ./out-tsc && tsc --build tsconfig.json",
         "bundle:ts": "rm -rf ./dist && node esbuild.config.mjs src/index.ts",
