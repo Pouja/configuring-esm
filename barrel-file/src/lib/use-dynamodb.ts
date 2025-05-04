@@ -1,7 +1,9 @@
 import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 
-export const awesome = 'awesome';
+console.log('importing from use-dynamodb');
+
+export const awesome = 'awesome'; // this will only get treeshaking when you minify your bundle
 
 export class DynamoDBManager {
   private client = new DynamoDBClient({});

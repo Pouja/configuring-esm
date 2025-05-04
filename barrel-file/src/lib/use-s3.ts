@@ -2,6 +2,8 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { lookup as getMimeType } from "mime-types";
 
+console.log('importing from use-s3');
+
 // All this dead code will be added when using a barrel file or not setting 'sideEffects: false' in your package.json
 // Imagine that most files in a corporate software program are around 500~750 lines.
 export class S3Manager {

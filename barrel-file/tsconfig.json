@@ -5,6 +5,7 @@
         "strict": true,
         "types": ["node"],
         "baseUrl": ".",
+        "outDir": "out-tsc",
         "rootDir": "src",
         "incremental": true,
         "isolatedModules": true,

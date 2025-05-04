@@ -1,6 +1,8 @@
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { formatISO } from "date-fns";
 
+console.log('importing from use-sqs');
+
 export class SQSManager {
   private client = new SQSClient({});
 

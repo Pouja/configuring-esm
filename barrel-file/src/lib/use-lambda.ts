@@ -1,6 +1,8 @@
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { z } from "zod";
 
+console.log('importing from use-lambda');
+
 const payloadSchema = z.object({
   message: z.string()
 });

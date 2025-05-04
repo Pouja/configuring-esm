@@ -1,5 +1,6 @@
 import { CloudWatchClient, PutMetricDataCommand } from "@aws-sdk/client-cloudwatch";
 import os from "os";
+console.log('importing from use-cloudwatch');
 
 export class CloudWatchManager {
   private client = new CloudWatchClient({});

@@ -17,6 +17,7 @@ But most importantly regardless of which tips I give here and which ones you rea
 4. [CJS vs ESM](#cjs-vs-esm)
 5. [Proper Imports](#proper-imports)
 6. [Barrel Files](#barrel-files)
+6. [Unused Code](#unused-code)
 
 ## TLDR;
 
@@ -241,10 +242,10 @@ Then it does not matter what file extension you use, it will always output to wh
 
 When using `nodenext` value you can still output to both CommonJS format and ESM format, you only need to change the `format` property in `esbuild` and you have to make sure to not set the `type` property in the package.json file.
 
-If you are not intending on publishing and if all your libraries/framework support ESM, which Jest does poorly right now, I would recommend to setting the `type` property to `module` and use the `.mts` file extension.
+If you are not intending on publishing and if all your libraries/framework support ESM, which Jest does do quite well right now, I would recommend to setting the `type` property to `module` and use the `.mts` file extension.
 You will notice  that you have to use `.mjs` when importing a relative file.
 Do not worry, you are not importing a javascript file, Typescript will automatically search for any `.mts` file with the same module name.
-It is confusing, people have complained about this behavior, but it is what it is.
+It is confusing, people have [complained]() about this behavior, but it is what it is.
 
 ## CJS vs ESM
 Now you know how you can transition, but how much will the difference be?
@@ -339,11 +340,11 @@ Then per library you can mark if all those files that are exported through the `
 
 If it is not possible to set the property `sideEffects` then you should prevent any re-exporting files or values.
 That means no barrel files.
-That also means no god files. God files is what I refer to values that import everything from everywhere are a single entry point.
+That also means no god files. God files is what I refer to values that import everything from everywhere as a single entry point.
 If you define all your AWS Lambda handlers in one file, that is a god file.
 If you define all the routes with all the components of your frontend page and do not chunk them, that is a god file.
 
-You can play with this in [my example project](https://github.com/Pouja/configuring-esm/blob/main/barrel-file).
+You can play with barrel files in [my example project](https://github.com/Pouja/configuring-esm/blob/main/barrel-file).
 1. Clone the repository
 2. `cd barrel-file`
 3. `npm install`

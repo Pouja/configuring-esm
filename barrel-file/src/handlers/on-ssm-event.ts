@@ -1,4 +1,4 @@
-import { SSMManager } from '../lib';
+import { SSMManager } from '../lib/use-ssm.js';
 
 export async function handler(event: any) {
     const ssmManager = new SSMManager();

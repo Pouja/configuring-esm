@@ -1,7 +1,6 @@
 {
     "name": "aws-sdk-barrel-demo",
     "version": "1.0.0",
-    "sideEffects": false,
     "scripts": {
         "build": "tsc",
         "bundle": "node esbuild.config.mjs"
