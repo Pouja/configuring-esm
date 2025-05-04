@@ -54,7 +54,7 @@ module.exports = {
 The fact that everyone was loaded synchronously, which was not really an issue at that time when writing for servers, it was not really feasible for front-ends.
 Therefore RequireJS was brought to live. If you ever wondered how it looks, there is an example repository still living [6]. If you are more interested in the history, look up: AMD, UMD, RequireJS.
 
-_Small note: I also believe people just wanted to write to own module system, who can blame their enthusiasm. It was a create module system_
+> Small note: I also believe people just wanted to write to own module system, who can blame their enthusiasm. It was a create module system.
 
 The problem with CommonJS is that the `require` function is a function.
 That means the following is valid:
@@ -262,6 +262,40 @@ It is 20x smaller when using the same code.
 If you generate the metafiles and upload it to `esbuild` page, you can reproduce this result.
 You will notice that the biggest difference comes from libphonenumber-js not being present, because due to ESM, `esbuild` knows it can remove it from the bundle safely.
 
+## ESM Dynamic Import
+For the readers that were paying attention, I went through create details saying that using dynamic module names for `require` is one of the reasons treeshaking is not possible.
+You could be wondering: "ESM supports `await import(moduleName)`, so how will that work?"
+Great question!
+
+ESM does allow the following:
+```typescript
+// on-ssm-event.ts
+async function handler(event: ProxyApigGatewayEventv2): Promise<any> {
+  const { Manager } = await import(event.superUnsafeThis);
+}
+```
+`esbuild` will in this case do nothing special.
+You are resposible yourself to make sure it resolves to something at runtime.
+If you do expect them to be present when dynamically importing them then you need to reference them somewhere.
+
+There are some other interesting results:
+```typescript
+// on-ssm-event.ts
+async function handler(event: ProxyApigGatewayEventv2): Promise<any> {
+    // esbuild will bundle all files that are reachable from one folder up
+    const manager = await import('../' + event.superUnsafeThis);
+
+    // esbuild will bundle both files
+    const manager = await import(event.isS3Event ? '../lib/use-s3.js' : '../lib/use-sqs.js');
+
+     // esbuild will bundle all files under the lib folder, not just the s3 and sqs one
+    const manager = await import('../lib/' + (event.isS3Event ? 'use-s3.js' : 'use-sqs.js'));
+}
+```
+You can play around with in [the example repository](https://github.com/Pouja/configuring-esm/blob/main/barrel-file/src/handlers/on-ssm-event.ts).
+
+> Depending on your bundler you might get different results! Analyze the bundle.
+
 ## Proper Imports
 Even when using CommonJS you can reduce your bundle size by looking at the import statements
 
@@ -316,6 +350,7 @@ If you use your barrel files sparingly or if you program is not large, you are g
 In the default case of `esbuild` and `webpack` it will not treeshake any unused re-exported value.
 That is due to the possible side effects a file can have.
 
+### Side Effects
 What is considered a side effect?
 Take the following [file](https://github.com/Pouja/configuring-esm/blob/main/barrel-file/src/lib/load-dotenv.ts):
 ```typescript
@@ -325,18 +360,16 @@ import dotenv from "dotenv";
 dotenv.config();
 ```
 When you import that file: `import './load-dotenv';` it will read out the `.env` file and update `process.env`.
-This is considered a side effect.
-You have more examples:
+This is considered a side effect because you are altering the possible execution of the program by just importing the file.
+You have more examples of side effects:
 - `import 'reflect-metadata';` when you need to use `tsyringe`, it modifies the global `Reflect` object.
 - `import 'zone.js';` when you use `angular`, overwrites all async calls with `zones`.
 
-So there is no sure way that `esbuild` or `webpack` can know that it can safely remove files when re-exporting them without giving any hints.
+There is no sure way that `esbuild` or `webpack` can know that it can safely remove files when re-exporting them without giving any hints.
 Both of them support [1](https://esbuild.github.io/api/#ignore-annotations)[2](https://webpack.js.org/guides/tree-shaking/#clarifying-tree-shaking-and-sideeffects) support the `sideEffects` property in the `package.json`.
 When set to false it will safely remove any unused re-exported file.
 But that will also remove `load-dotenv.ts`! So be careful when using that property.
-
-A good solution in a large project is to have `pnpm` workspaces, where you have internal libraries.
-Then per library you can mark if all those files that are exported through the `package.json` file have side effects or not.
+It does not affect any other npm package you are using as a side effect, only the ones in your project.
 
 If it is not possible to set the property `sideEffects` then you should prevent any re-exporting files or values.
 That means no barrel files.
@@ -344,6 +377,47 @@ That also means no god files. God files is what I refer to values that import ev
 If you define all your AWS Lambda handlers in one file, that is a god file.
 If you define all the routes with all the components of your frontend page and do not chunk them, that is a god file.
 
+### Alternative: Workspaces
+A good solution in a large project is to have `pnpm` [workspaces](https://pnpm.io/pnpm-workspace_yaml), where you have internal libraries.
+Then per library you can mark if all those files that are exported through the `package.json` file have side effects or not.
+You can find an [example configuration](https://github.com/Pouja/configuring-esm/blob/main/monorepo-ts-esm-workspaces/packages/base-models/package.json)
+```json
+{
+    "name": "@packages/base-models",
+    "typesVersions": {
+        "*": {
+            "./enums/*": [
+                "./src/enums/*"
+            ],
+            "./models/*": [
+                "./src/models/*"
+            ]
+        }
+    },
+    "exports": {
+        "./enums/*": "./src/enums/*",
+        "./models/*": "./src/models/*"
+    }
+}
+```
+The exports field allows you to sub categorize your internal library.
+The wild card `*` allows any subpath or file, if you want to limit it to one depth: `"./enums/*.js": "./src/enums/*.js"`.
+The `typesVersions` is only necessary if you do not intend to compile your typescript files, or if you do not place it next to your `.ts(m)` files.
+
+### Alternative: TSConfig Paths
+Another solution, if you do not use internal libraries through the yarn workspaces or pnpm workspaces, is using [tsconfig path](https://www.typescriptlang.org/tsconfig/#paths). Taking the previous `package.json` example, you will write it as:
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@packages/base-models/enums/*": ["./src/enums/*"],
+      "@packages/base-models/models/*": ["./src/models/*"],
+    }
+  }
+}
+```
+
+### Demo
 You can play with barrel files in [my example project](https://github.com/Pouja/configuring-esm/blob/main/barrel-file).
 1. Clone the repository
 2. `cd barrel-file`

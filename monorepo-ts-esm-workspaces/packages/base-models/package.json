@@ -13,7 +13,7 @@
     "type": "module",
     "exports": {
         "./enums/*": "./src/enums/*",
-        "./models/*": "./src/models/*"
+        "./models/*.js": "./src/models/*.js"
     },
     "dependencies": {
         "class-validator": "0.14.1"

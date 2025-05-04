@@ -1,9 +1,11 @@
 {
     "name": "aws-sdk-barrel-demo",
     "version": "1.0.0",
+    "type": "module",
+    "sideEffects": "false",
     "scripts": {
-        "build": "tsc",
-        "bundle": "node esbuild.config.mjs"
+        "build": "rm -rf out-tsc && tsc",
+        "bundle": "rm -rf dist && node esbuild.config.mjs"
     },
     "dependencies": {
         "@aws-sdk/client-cloudwatch": "3.799.0",
