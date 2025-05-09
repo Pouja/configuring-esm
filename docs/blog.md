@@ -30,7 +30,7 @@ But most importantly regardless of which tips I give here and which ones you rea
 * Update your `webpack`/esbuild config to also read `module` entry of your npm packages 
 
 ## Module System
-To able to use functions or classes written in one file in another file, requires a way of telling how the files should be linked.
+To able to use functions or classes written in one file in another file requires a way of telling how the files should be linked.
 In the days of gulp/grunt and jquery there was not much choice, we all wrote everything on the `window` object.
 Everything was accessible by all objects and functions. We had to use closures to isolate `var` variables from another and prevent naming collisions.
 It was basically just one large JavaScript file.
@@ -39,7 +39,7 @@ Quite the nightmare.
 ### CommonJS
 Luckily people quickly started writing systems to separate them, not only at when you are writing your code but also at runtime.
 One of the first one and one that still lives to today is CommonJS.
-Everyone writing NodeJS is probably already familiar with this syntax:
+Everyone writing in plain NodeJS is probably already familiar with this syntax:
 
 ```javascript
 const axios = require('axios');
@@ -100,8 +100,9 @@ This freedom was quite useful in the early days of NPM, but it adds too much amb
 There are more "quirks" to CommonJS, if you are interested in more details, a good start would be [the NodeJS documentation](https://nodejs.org/api/modules.html) itself.
 
 ### ESM
-`require` Is not defined within [EcmaScript](https://tc39.es/ecma262/), it is not natively implemented by any browser.
-It is something of NodeJS itself. The same applies for the AMD, UMD and System module syntax.
+`require` Is not defined within [EcmaScript](https://tc39.es/ecma262/) and it is not natively implemented by any browser.
+It is something of NodeJS itself built upon v8.
+The same applies for the AMD, UMD and System module syntax.
 EcmaScript was behind the ecosystem, but that was a great plus because it could look at all the existing module system and draft a better one.
 Entering ESM. It has similar syntax to what Typescript does:
 
@@ -145,15 +146,23 @@ Furthermore to prevent ambiguity you either reference a package or a file.
 That is why the file extensions is required.
 This is also where people get confused when they are writing typescript but they have to use `.js` file extensions, luckily this is fixed by using `nodenext` as `moduleResolution`.
 
+If you are interested in more details about esm:
+* [Detailed explanation](https://exploringjs.com/js/book/ch_modules.html) written by [Dr. Axel Rauschmayer](https://dr-axel.de/).
+  Also check out his [blog](https://2ality.com/), always very well written and comprehensive.
+* Mozilla [explanation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) on JavaScript imports.
+* NodeJS [documentation](https://nodejs.org/api/esm.html)
+* [V8](https://v8.dev/features/modules) on ESM imports impact on the browser.
+* [Language specification](https://262.ecma-international.org/15.0/index.html#sec-ecmascript-language-scripts-and-modules) on ESM by ECMAScript.
+
 ## Measuring
-Befor we dive in to how much difference it makes between CJS and ESM and how you can transition.
+Before we dive in to how much difference it makes between CJS and ESM and how you can transition.
 It is useful to know how you can measure it.
 
 webpack And `esbuild` both support emitting a metafile, which contains data which npm packages are imported, why they are imported and which module system is used to import them.
 With `webpack` you can use the `--profile` [flag](https://webpack.js.org/configuration/other-options/#profile).
-With `esbuild` you can use the `--metafile=bundle.meta.json` [flag](https://esbuild.github.io/api/#build-metadata) or the property `{meta: true}` that will return the json object containg the meta data, which you can write to the file system yourself.
+With `esbuild` you can use the `--metafile=bundle.meta.json` [flag](https://esbuild.github.io/api/#build-metadata) or the property `{meta: true}` that will return the json object contains the meta data, which you can write to the file system yourself.
 You can submit the meta file to https://esbuild.github.io/analyze/ and then you will get a visual representation on how everything is bundled.
-You can let it mark visually which packages are intepretted as CommonJS and which ones as ESM.
+You can let it mark visually which packages are interpreted as CommonJS and which ones as ESM.
 This will give you the knowledge if you imported them correctly and if `esbuild` was able to find the ESM bundle of the npm package.
 
 [add screenshot or gif on how to use the website]
@@ -228,13 +237,13 @@ function myFunc() {
 
 ### tsconfig.json
 This is the most confusing part.
-I really had to read throug the [module page](https://www.typescriptlang.org/docs/handbook/modules/reference.html) of typescript couple of times to understand what they are saying.
+I really had to read through the [module page](https://www.typescriptlang.org/docs/handbook/modules/reference.html) of typescript couple of times to understand what they are saying.
 The most important configurations for transition of CJS to ESM are:
 ```json
 {
     "compileOnSave": true,
     "compilerOptions": {
-        "moduleResolution": "nodenext", // this tells typescript which algorith/method it should use to resolve imports
+        "moduleResolution": "nodenext", // this tells typescript which algorithm/method it should use to resolve imports
         "module": "NodeNext", // This tells if you are using CommonJS, AMD, System, ESM or a mix of CommonJS and ESM which is nodenext
         "target": "ESNext", // This tells how the output should look like after you have compiled to javascript
     },
@@ -282,18 +291,18 @@ Great question!
 ESM does allow the following:
 ```typescript
 // on-ssm-event.ts
-async function handler(event: ProxyApigGatewayEventv2): Promise<any> {
+async function handler(event: ProxyApiGatewayEventv2): Promise<any> {
   const { Manager } = await import(event.superUnsafeThis);
 }
 ```
 `esbuild` will in this case do nothing special.
-You are resposible yourself to make sure it resolves to something at runtime.
+You are responsible yourself to make sure it resolves to something at runtime.
 If you do expect them to be present when dynamically importing them then you need to reference them somewhere.
 
 There are some other interesting results:
 ```typescript
 // on-ssm-event.ts
-async function handler(event: ProxyApigGatewayEventv2): Promise<any> {
+async function handler(event: ProxyApiGatewayEventv2): Promise<any> {
     // esbuild will bundle all files that are reachable from one folder up
     const manager = await import('../' + event.superUnsafeThis);
 
@@ -414,7 +423,7 @@ You can find an [example configuration](https://github.com/Pouja/configuring-esm
 ```
 The exports field allows you to sub categorize your internal library.
 The wild card `*` allows any subpath (0 or more levels deep) or any file.
-If you want to limit it to one depth you have to set the subfolders to null: `"./enums/not-this-dir/": null`.
+If you want to limit it to one depth you have to set the subfolder to null: `"./enums/not-this-dir/": null`.
 See [official NodeJS documentation](https://nodejs.org/api/packages.html#exports-sugar) on the specifications of `exports` field.
 
 The `typesVersions` is only necessary if you use CommonJS as module resolution or if you want typescript to refer to `.d.ts` files that are not next to your `.(m)ts` files.
@@ -470,7 +479,7 @@ Or you can use [labels](https://esbuild.github.io/api/#drop-labels) to achieve s
 
 ## Conclusion
 I have listed some things to look out for.
-This list might not be exhaustive, but the most important thing is: analyse!
+This list might not be exhaustive, but the most important thing is: analyze!
 Make sure that bundler you use has a way to convey which files and which npm packages were included.
 This blog post should give you enough information to understand then why some files/code/packages were included.
 From there you can start eliminating and changing the structure of your code.
