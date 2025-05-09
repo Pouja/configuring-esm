@@ -1,4 +1,4 @@
-# Treeshaking and ESM
+# Everything You Need To Know About Treeshaking and ESM
 
 With increasing support of ESM in Typescript [1](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-7.html#ecmascript-module-support-in-nodejs)[2](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-4.html#support-for-require-calls-in---moduleresolution-bundler-and---module-preserve)[3](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-8.html#support-for-require-of-ecmascript-modules-in---module-nodenext) and NodeJS [1](https://nodejs.org/en/blog/announcements/v20-release-announce#custom-esm-loader-hooks-nearing-stable)[2](https://nodejs.org/en/blog/announcements/v22-release-announce#support-requireing-synchronous-esm-graphs)[3](https://nodejs.org/en/blog/release/v23.0.0#requireesm-is-now-enabled-by-default), it becomes easier and easier to write your frontend or backed in ESM format.
 It has better support for treeshaking when using [`esbuild`](https://esbuild.github.io/api/#tree-shaking) or [`webpack`](https://webpack.js.org/guides/tree-shaking/) and with complexity rising of your backend and frontend it is more then ever important to look at your bundle sizes. 
@@ -413,8 +413,11 @@ You can find an [example configuration](https://github.com/Pouja/configuring-esm
 }
 ```
 The exports field allows you to sub categorize your internal library.
-The wild card `*` allows any subpath or file, if you want to limit it to one depth: `"./enums/*.js": "./src/enums/*.js"`.
-The `typesVersions` is only necessary if you do not intend to compile your typescript files, or if you do not place it next to your `.ts(m)` files.
+The wild card `*` allows any subpath (0 or more levels deep) or any file.
+If you want to limit it to one depth you have to set the subfolders to null: `"./enums/not-this-dir/": null`.
+See [official NodeJS documentation](https://nodejs.org/api/packages.html#exports-sugar) on the specifications of `exports` field.
+
+The `typesVersions` is only necessary if you use CommonJS as module resolution or if you want typescript to refer to `.d.ts` files that are not next to your `.(m)ts` files.
 
 ### Alternative: TSConfig Paths
 Another solution, if you do not use internal libraries through the yarn workspaces or pnpm workspaces, is using [tsconfig path](https://www.typescriptlang.org/tsconfig/#paths). Taking the previous `package.json` example, you will write it as:
@@ -438,7 +441,7 @@ You can play with barrel files in [my example project](https://github.com/Pouja/
 5. Run `node `esbuild`.config.mjs` and see the effects.
 
 ## Unused Code
-I have listed several things that `esbuild` might see as death code depending on the setup of your project.
+I have listed several things that `esbuild` might see as dead code depending on the setup of your project.
 But what about unused code even when using ESM and no side effects?
 
 Unused methods and properties of classes will not be treeshaking.
@@ -462,6 +465,8 @@ Then make sure to enable minification.
 Or you can use [labels](https://esbuild.github.io/api/#drop-labels) to achieve similar behavior.
 
 > NOTE: There might be bundlers out there that can do better in certain scenarios. That is why measuring is key!
+
+> I did [try](https://github.com/Pouja/configuring-esm/blob/main/barrel-file/terser.config.mjs) [rollup](https://rollupjs.org) with [terser](https://github.com/terser/terser) but I saw similar results
 
 ## Conclusion
 I have listed some things to look out for.
