@@ -2,7 +2,8 @@
     "extends": ["@configurations/typescript/base"],
     "compilerOptions": {
         "rootDir": ".",
-        "baseUrl": "."
+        "baseUrl": ".",
+        "verbatimModuleSyntax": false
     },
     "include": [
         "src/**/*.ts"

@@ -15,6 +15,7 @@ export async function buildApp(entryPoints) {
             platform: "node",
             format: "esm",
             metafile: true,
+            minify: true,
             outdir: "dist",
             color: true,
             logLevel: 'info',

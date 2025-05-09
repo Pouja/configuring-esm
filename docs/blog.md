@@ -1,8 +1,8 @@
 # Treeshaking and ESM
 
-With increasing support of ESM in Typescript [1] and NodeJS [2], it becomes easier and easier to write your frontend or backed in ESM format.
-It has better support for treeshaking when using `esbuild` [3] or `webpack` [4] and with complexity rising of your backend and frontend it is more then ever important to look at your bundle sizes. 
-Even just recently AWS has announced that everyone, not just people using custom runtime environment, have to pay for the INIT Duration [5], making it also cost effective to have your AWS Lambda functions as small as possible.
+With increasing support of ESM in Typescript [1](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-7.html#ecmascript-module-support-in-nodejs)[2](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-4.html#support-for-require-calls-in---moduleresolution-bundler-and---module-preserve)[3](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-8.html#support-for-require-of-ecmascript-modules-in---module-nodenext) and NodeJS [1](https://nodejs.org/en/blog/announcements/v20-release-announce#custom-esm-loader-hooks-nearing-stable)[2](https://nodejs.org/en/blog/announcements/v22-release-announce#support-requireing-synchronous-esm-graphs)[3](https://nodejs.org/en/blog/release/v23.0.0#requireesm-is-now-enabled-by-default), it becomes easier and easier to write your frontend or backed in ESM format.
+It has better support for treeshaking when using [`esbuild`](https://esbuild.github.io/api/#tree-shaking) or [`webpack`](https://webpack.js.org/guides/tree-shaking/) and with complexity rising of your backend and frontend it is more then ever important to look at your bundle sizes. 
+Even just recently AWS has announced that everyone, not just people using custom runtime environment, have to pay for [the INIT Duration](https://aws.amazon.com/blogs/compute/aws-lambda-standardizes-billing-for-init-phase/), making it also cost effective to have your AWS Lambda functions as small as possible.
 
 I want to bring you through my journey of understanding difference between CommonJS and ESM and why it allows for better treeshaking. 
 Looking at which typescript config rules and eslint rule might help to reduce it even further. 
@@ -15,9 +15,10 @@ But most importantly regardless of which tips I give here and which ones you rea
 2. [Measuring](#measuring)
 3. [CJS to ESM](#cjs-to-esm)
 4. [CJS vs ESM](#cjs-vs-esm)
-5. [Proper Imports](#proper-imports)
-6. [Barrel Files](#barrel-files)
-6. [Unused Code](#unused-code)
+5. [ESM Dynamic Import](#esm-dynamic-import)
+6. [Proper Imports](#proper-imports)
+7. [Barrel Files](#barrel-files)
+8. [Unused Code](#unused-code)
 
 ## TLDR;
 
@@ -31,13 +32,14 @@ But most importantly regardless of which tips I give here and which ones you rea
 ## Module System
 To able to use functions or classes written in one file in another file, requires a way of telling how the files should be linked.
 In the days of gulp/grunt and jquery there was not much choice, we all wrote everything on the `window` object.
-Everything was accessible by everyone. We had to use closures to isolate `var` variables from another and prevent naming collisions.
+Everything was accessible by all objects and functions. We had to use closures to isolate `var` variables from another and prevent naming collisions.
 It was basically just one large JavaScript file.
 Quite the nightmare.
 
 ### CommonJS
 Luckily people quickly started writing systems to separate them, not only at when you are writing your code but also at runtime.
-One of the first one and one that still lives to today is CommonJS. Everyone writing NodeJS is probably already familiar with this syntax:
+One of the first one and one that still lives to today is CommonJS.
+Everyone writing NodeJS is probably already familiar with this syntax:
 
 ```javascript
 const axios = require('axios');
@@ -51,8 +53,10 @@ module.exports = {
 };
 ```
 
-The fact that everyone was loaded synchronously, which was not really an issue at that time when writing for servers, it was not really feasible for front-ends.
-Therefore RequireJS was brought to live. If you ever wondered how it looks, there is an example repository still living [6]. If you are more interested in the history, look up: AMD, UMD, RequireJS.
+The fact that everything was loaded synchronously, which was not really an issue at that time when writing for servers, it was not really feasible for front-ends.
+Therefore [RequireJS](https://requirejs.org/) was brought to live.
+If you ever wondered how it looks, there is [an example repository](https://github.com/volojs/create-template) still living.
+If you are more interested in the history, look up: AMD, [UMD](https://github.com/umdjs/umd), RequireJS.
 
 > Small note: I also believe people just wanted to write to own module system, who can blame their enthusiasm. It was a create module system.
 
@@ -93,7 +97,7 @@ require('../libs/manager');
 ```
 This could either be a `../libs/manager.js` file or `../libs/manager/index.js` or `../libs/manager/package.json`.
 This freedom was quite useful in the early days of NPM, but it adds too much ambiguity for the developers.
-There are more "quirks" to CommonJS, if you are interested in more details, a good start would be NodeJS documentation itself [7](https://nodejs.org/api/modules.html).
+There are more "quirks" to CommonJS, if you are interested in more details, a good start would be [the NodeJS documentation](https://nodejs.org/api/modules.html) itself.
 
 ### ESM
 `require` Is not defined within [EcmaScript](https://tc39.es/ecma262/), it is not natively implemented by any browser.
@@ -122,10 +126,18 @@ import fs from 'fs';
 import fs1 from 'f' + 's'; // error
 import fs2 from ['f' + 's'].join(''); // error
 import fs3 from `${"f"}s`; // error
+import fs4 from +'fs'; // error
+if (process.env) {
+    // import fs5 from 'fs'; // error
+}
 
 async function getFS() {
     return await import('fs'); // allowed
 }
+const fs6 = await getFS();
+
+console.info(fs === fs6.default); // true
+console.info(fs === fs2); // true
 ```
 
 This allows anyone to perform static analysis and build a tree of how the program is linked together.
@@ -154,7 +166,7 @@ I believe more in learning by doing and learning by reading.
 So I hope this helps for you.
 
 ### `esbuild`
-Both repository contain a `esbuild.config.(m)js` file.
+Both projects contain a `esbuild.config.(m)js` file.
 Depending on your own project, this configuration is in most cases either generated or hidden from you.
 The most important configurations are:
 ```javascript
@@ -174,7 +186,7 @@ But the exception is when you use a plugin like `esbuild`-decorator, which does 
 So you can not just configure your tsconfig to use CommonJS and then tell `esbuild` to output in ESM, you will most likely get some runtime errors.
 
 The `mainFields` property is quite important.
-Only a few modern libraries now output properly.
+Only a few modern libraries now output it properly.
 By properly I mean using the `exports` field in the package.json, to tell NodeJS module resolver which file it should read depending on if you are using ESM or CommonJS.
 If we take a look at a part of the package.json of `class-validator`:
 ```json

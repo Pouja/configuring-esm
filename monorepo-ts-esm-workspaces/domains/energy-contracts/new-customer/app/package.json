@@ -13,7 +13,9 @@
         "@packages/base-models": "workspace:*",
         "class-validator": "0.14.1"
     },
+    "exports": null,
     "type": "module",
+    "sideEffects": false,
     "scripts": {
         "typecheck": "tsc --project tsconfig.json --noEmit",
         "bundle": "node esbuild.config.mjs"

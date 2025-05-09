@@ -1,20 +1,14 @@
 {
     "name": "@new-customer/api-models",
-    "typesVersions": {
-        "*": {
-            "*": [
-                "./src/*"
-            ]
-        }
-    },
     "exports": {
-        "./*": "./src/*"
+        "./*.js": "./src/*.js"
     },
     "dependencies": {
         "@packages/base-models": "workspace:*",
         "class-validator": "^0.14.1"
     },
-    "type": "module",
+    "sideEffects": false,
+    "type": "commonjs",
     "devDependencies": {
         "@configurations/typescript": "workspace:*",
         "@types/node": "^22.14.1"

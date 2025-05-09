@@ -10,6 +10,7 @@
             ]
         }
     },
+    "sideEffects": false,
     "type": "module",
     "exports": {
         "./enums/*": "./src/enums/*",
