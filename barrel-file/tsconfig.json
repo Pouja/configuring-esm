@@ -7,10 +7,10 @@
         "baseUrl": ".",
         "outDir": "out-tsc",
         "rootDir": "src",
-        "incremental": true,
         "isolatedModules": true,
         "composite": true,
-        "noUncheckedSideEffectImports": true
+        "noUncheckedSideEffectImports": true,
+        "tsBuildInfoFile": "out-tsc/.tsbuildinfo"
     },
-    "include": ["src/*/**.ts"]
+    "include": ["**/*.ts"]
 }

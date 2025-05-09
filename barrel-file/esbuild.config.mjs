@@ -17,13 +17,13 @@ try {
         platform: "node",
         format: "esm",
         metafile: true,
-        outdir: "dist",
+        outdir: "dist/esbuild",
         color: true,
         minify: true,
         logLevel: 'info',
         tsconfig: 'tsconfig.json'
     });
-    writeFileSync('./dist/metafile.json', JSON.stringify(metafile, null, 2), 'utf-8');
+    writeFileSync('./dist/esbuild/metafile.json', JSON.stringify(metafile, null, 2), 'utf-8');
 } catch (e) {
     console.error(e);
     process.exit(1);

@@ -2,10 +2,12 @@
     "name": "aws-sdk-barrel-demo",
     "version": "1.0.0",
     "type": "module",
-    "sideEffects": "false",
+    "sideEffects": false,
+    "exports": null,
     "scripts": {
         "build": "rm -rf out-tsc && tsc",
-        "bundle": "rm -rf dist && node esbuild.config.mjs"
+        "bundle:esbuild": "rm -rf dist/esbuild && node esbuild.config.mjs",
+        "bundle:rollup": "rm -rf dist/rollup out-tsc && tsc --build && rollup --config rollup.config.mjs"
     },
     "dependencies": {
         "@aws-sdk/client-cloudwatch": "3.799.0",
@@ -21,9 +23,15 @@
         "zod": "^3.24.3"
     },
     "devDependencies": {
+        "@rollup/plugin-commonjs": "^28.0.3",
+        "@rollup/plugin-dynamic-import-vars": "^2.1.5",
+        "@rollup/plugin-json": "^6.1.0",
+        "@rollup/plugin-node-resolve": "^16.0.1",
         "@types/mime-types": "^2.1.4",
         "@types/node": "^22.15.3",
         "esbuild": "^0.25.3",
+        "rollup": "^4.40.2",
+        "rollup-plugin-bundle-stats": "^4.20.0",
         "typescript": "5.8.3"
     }
 }
