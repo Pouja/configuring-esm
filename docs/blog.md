@@ -1,13 +1,13 @@
 # Everything You Need To Know About Treeshaking and ESM
 
 With increasing support of ESM in Typescript [1](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-7.html#ecmascript-module-support-in-nodejs)[2](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-4.html#support-for-require-calls-in---moduleresolution-bundler-and---module-preserve)[3](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-8.html#support-for-require-of-ecmascript-modules-in---module-nodenext) and NodeJS [1](https://nodejs.org/en/blog/announcements/v20-release-announce#custom-esm-loader-hooks-nearing-stable)[2](https://nodejs.org/en/blog/announcements/v22-release-announce#support-requireing-synchronous-esm-graphs)[3](https://nodejs.org/en/blog/release/v23.0.0#requireesm-is-now-enabled-by-default), it becomes easier and easier to write your frontend or backed in ESM format.
-It has better support for treeshaking when using [`esbuild`](https://esbuild.github.io/api/#tree-shaking) or [`webpack`](https://webpack.js.org/guides/tree-shaking/) and with complexity rising of your backend and frontend it is more then ever important to look at your bundle sizes. 
+Using the ESM module system has better support for treeshaking when using [`esbuild`](https://esbuild.github.io/api/#tree-shaking) or [`webpack`](https://webpack.js.org/guides/tree-shaking/) and with complexity rising of your backend and frontend it is more then ever important to look at your bundle sizes. 
 Even just recently AWS has announced that everyone, not just people using custom runtime environment, have to pay for [the INIT Duration](https://aws.amazon.com/blogs/compute/aws-lambda-standardizes-billing-for-init-phase/), making it also cost effective to have your AWS Lambda functions as small as possible.
 
 I want to bring you through my journey of understanding difference between CommonJS and ESM and why it allows for better treeshaking. 
 Looking at which typescript config rules and eslint rule might help to reduce it even further. 
 Looking at what does get removed when treeshaking and what does not and why.
-But most importantly regardless of which tips I give here and which ones you read in other posts: how you can measure the bundle size so you can iteratively decrease it.
+But most importantly regardless of which tips I give here and which ones you read in other posts: how you can measure the bundle size so you can iteratively decrease it yourself.
 
 ## Table of Contents
 
@@ -27,7 +27,7 @@ But most importantly regardless of which tips I give here and which ones you rea
 * Avoid barrel files or set `sideEffects` to `false` in your nearest `package.json`
 * Set `@typescript-eslint/no-unused-vars` to `error`
 * Set `@typescript-eslint/consistent-type-imports` to `error`
-* Update your `webpack`/esbuild config to also read `module` entry of your npm packages 
+* Update your `webpack`/`esbuild` config to also read `module` entry of your npm packages 
 
 ## Module System
 To able to use functions or classes written in one file in another file requires a way of telling how the files should be linked.
@@ -104,6 +104,7 @@ There are more "quirks" to CommonJS, if you are interested in more details, a go
 It is something of NodeJS itself built upon v8.
 The same applies for the AMD, UMD and System module syntax.
 EcmaScript was behind the ecosystem, but that was a great plus because it could look at all the existing module system and draft a better one.
+
 Entering ESM. It has similar syntax to what Typescript does:
 
 ```typescript
@@ -129,7 +130,7 @@ import fs2 from ['f' + 's'].join(''); // error
 import fs3 from `${"f"}s`; // error
 import fs4 from +'fs'; // error
 if (process.env) {
-    // import fs5 from 'fs'; // error
+  import fs5 from 'fs'; // error
 }
 
 async function getFS() {
@@ -138,7 +139,6 @@ async function getFS() {
 const fs6 = await getFS();
 
 console.info(fs === fs6.default); // true
-console.info(fs === fs2); // true
 ```
 
 This allows anyone to perform static analysis and build a tree of how the program is linked together.
@@ -165,8 +165,6 @@ You can submit the meta file to https://esbuild.github.io/analyze/ and then you 
 You can let it mark visually which packages are interpreted as CommonJS and which ones as ESM.
 This will give you the knowledge if you imported them correctly and if `esbuild` was able to find the ESM bundle of the npm package.
 
-[add screenshot or gif on how to use the website]
-
 ## CJS to ESM
 To show you the difference, I have created 2 projects, both have similar code but one is written for [CommonJS](https://github.com/Pouja/configuring-esm/tree/main/ts-cjs) and the other for [ESM](https://github.com/Pouja/configuring-esm/tree/main/ts-esm).
 You can clone the repository and play with the different ways of importing a file and see what impact it will make.
@@ -191,7 +189,7 @@ The most important configurations are:
 ```
 
 esbuild Has its own transpiler, so that is why only some properties are read from the tsconfig.
-But the exception is when you use a plugin like `esbuild`-decorator, which does use all the settings from your tsconfig.
+But the exception is when you use a plugin like [`esbuild-decorator`](https://www.npmjs.com/package/esbuild-decorators), which does use all the settings from your tsconfig.
 So you can not just configure your tsconfig to use CommonJS and then tell `esbuild` to output in ESM, you will most likely get some runtime errors.
 
 The `mainFields` property is quite important.
@@ -256,17 +254,17 @@ If you use `.ts` but the package.json has the property `type` set to `module` it
 In all other cases it will use CommonJS.
 Although typescript is quite lenient since 5.8.x on which module system it will use, it best to be consistent.
 
-> Do not mix! You will get unexpected results when using frameworks that are consistent.
+> Do not mix! You will get unexpected results when using frameworks that can possibly use different methods to determine ESM vs CommonJS!
 
 You can also set `moduleResolution` to `bundler`, but then you have to specify to which specific module system you want your javascript files compiled to.
 Then it does not matter what file extension you use, it will always output to what ever module system you have picked.
 
-When using `nodenext` value you can still output to both CommonJS format and ESM format, you only need to change the `format` property in `esbuild` and you have to make sure to not set the `type` property in the package.json file.
+When using `nodenext` configuration value you can still output to both CommonJS format and ESM format, you only need to change the `format` property in `esbuild` and you have to make sure to not set the `type` property in the package.json file.
 
 If you are not intending on publishing and if all your libraries/framework support ESM, which Jest does do quite well right now, I would recommend to setting the `type` property to `module` and use the `.mts` file extension.
 You will notice  that you have to use `.mjs` when importing a relative file.
 Do not worry, you are not importing a javascript file, Typescript will automatically search for any `.mts` file with the same module name.
-It is confusing, people have [complained]() about this behavior, but it is what it is.
+It is confusing, people have [complained](https://github.com/microsoft/TypeScript/issues/42151) about this behavior, but it is what it is.
 
 ## CJS vs ESM
 Now you know how you can transition, but how much will the difference be?
@@ -280,8 +278,15 @@ ESM:
 ![ESM](images/ESM-meta.png "Bundle size for ESM")
 
 It is 20x smaller when using the same code.
-If you generate the metafiles and upload it to `esbuild` page, you can reproduce this result.
-You will notice that the biggest difference comes from libphonenumber-js not being present, because due to ESM, `esbuild` knows it can remove it from the bundle safely.
+If you generate the metafiles and upload it to `esbuild` page, you can reproduce this result:
+1. `git clone https://github.com/Pouja/configuring-esm.git`
+2. `fnm use`
+3. `cd ts-cjs && npm install && npm run bundle:ts && cd -`
+4. `cd ts-esm && npm install && npm run bundle:ts && cd -`
+5. Open in the browser `https://esbuild.github.io/analyze/`
+6. Upload the `metafile.json` in the `dist` folders
+
+You will notice that the biggest difference comes from `libphonenumber-js` not being present, because due to ESM, `esbuild` knows it can remove it from the bundle safely.
 
 ## ESM Dynamic Import
 For the readers that were paying attention, I went through create details saying that using dynamic module names for `require` is one of the reasons treeshaking is not possible.
@@ -315,7 +320,7 @@ async function handler(event: ProxyApiGatewayEventv2): Promise<any> {
 ```
 You can play around with in [the example repository](https://github.com/Pouja/configuring-esm/blob/main/barrel-file/src/handlers/on-ssm-event.ts).
 
-> Depending on your bundler you might get different results! Analyze the bundle.
+Depending on your bundler you might get different results! Analyze the bundle. For example [@rollup/plugin-dynamic-imports-vars](https://www.npmjs.com/package/@rollup/plugin-dynamic-import-vars) has different ways it variable imports.
 
 ## Proper Imports
 Even when using CommonJS you can reduce your bundle size by looking at the import statements
@@ -358,20 +363,17 @@ It has impact on two things: runtime and bundle size.
 As explained in the CommonJS section, each file is executed before imported and wrapped by NodeJS.
 That means when you import a barrel file, NodeJS will go through each file mentioned there, then it will read each require call, load that file etc.
 When your program is large enough, or you node_modules folder is large enough, this will impact any framework or library you are using.
+With ESM you still have the same issue, ECMAScript does not verify if a imported module has side effects or not.
+It will always evaluate all top level expressions in a module, even if you only import a single function.
 
 Take `jest` for example, it will go through all those files before it even runs any test function.
 I have seen cases where it took 20+ seconds before running the first file, even when most files were not even used.
-But due to extensive usage of barrel files all those files were executed and transpiled.
-Even when you use ESM, `jest` still has to transpile or compile your typescript files to javascript files.
+But due to extensive usage of barrel files all those files were transipled and then executed.
 By eliminating some of those barrel files, I was able to reduce the start time to 5 seconds.
 
 If you use your barrel files sparingly or if you program is not large, you are good to go.
 
-### Bundling
-In the default case of `esbuild` and `webpack` it will not treeshake any unused re-exported value.
-That is due to the possible side effects a file can have.
-
-### Side Effects
+### Bundle Size
 What is considered a side effect?
 Take the following [file](https://github.com/Pouja/configuring-esm/blob/main/barrel-file/src/lib/load-dotenv.ts):
 ```typescript
@@ -387,12 +389,13 @@ You have more examples of side effects:
 - `import 'zone.js';` when you use `angular`, overwrites all async calls with `zones`.
 
 There is no sure way that `esbuild` or `webpack` can know that it can safely remove files when re-exporting them without giving any hints.
-Both of them support [1](https://esbuild.github.io/api/#ignore-annotations)[2](https://webpack.js.org/guides/tree-shaking/#clarifying-tree-shaking-and-sideeffects) support the `sideEffects` property in the `package.json`.
+That is why barrel files can increase your bundle size significantly.
+Luckily both of them support [1](https://esbuild.github.io/api/#ignore-annotations)[2](https://webpack.js.org/guides/tree-shaking/#clarifying-tree-shaking-and-sideeffects) the `sideEffects` property in the `package.json`.
 When set to false it will safely remove any unused re-exported file.
 But that will also remove `load-dotenv.ts`! So be careful when using that property.
 It does not affect any other npm package you are using as a side effect, only the ones in your project.
 
-If it is not possible to set the property `sideEffects` then you should prevent any re-exporting files or values.
+If it is not possible to set the property `sideEffects` then you should prevent any re-exporting modules/files.
 That means no barrel files.
 That also means no god files. God files is what I refer to values that import everything from everywhere as a single entry point.
 If you define all your AWS Lambda handlers in one file, that is a god file.

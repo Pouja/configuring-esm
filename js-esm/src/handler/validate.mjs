@@ -1,5 +1,5 @@
 import { validate } from 'class-validator';
-import { MyAwesome } from '#lib/MyAwesome.mjs';
+import { MyAwesome } from '../lib/index.mjs';
 
 export async function validateApi() {
     const myAwesome = new MyAwesome();
